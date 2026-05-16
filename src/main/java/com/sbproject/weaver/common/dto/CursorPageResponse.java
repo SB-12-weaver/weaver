@@ -10,10 +10,10 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class CursorPageResponse<T> {
-    int size;
-    boolean hasNext;
-    Object nextCursor;
-    List<T> items;
-    int totalElements;
-    int nextIdAfter;
+    private List<T> content;
+    private String nextCursor;
+    private Long nextIdAfter;
+    private int size;
+    private long totalElements;
+    private boolean hasNext;
 }
