@@ -1,8 +1,7 @@
 package com.sbproject.weaver.department.dto;
 
-import com.sbproject.weaver.department.entity.DepartmentEntity;
+import com.sbproject.weaver.department.entity.Department;
 import java.time.LocalDate;
-import java.util.UUID;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -19,8 +18,8 @@ public class CreateRequest{
     this.establishedDate = foundedDate;
   }
 
-  public DepartmentEntity toEntity() {
-    return DepartmentEntity.builder()
+  public Department toEntity() {
+    return Department.builder()
         .name(name)
         .description(description)
         .establishedDate(establishedDate)

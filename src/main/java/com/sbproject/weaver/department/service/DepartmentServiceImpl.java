@@ -2,9 +2,8 @@ package com.sbproject.weaver.department.service;
 
 import com.sbproject.weaver.department.dto.CreateRequest;
 import com.sbproject.weaver.department.dto.DepartmentDto;
-import com.sbproject.weaver.department.entity.DepartmentEntity;
+import com.sbproject.weaver.department.entity.Department;
 import com.sbproject.weaver.department.repository.DepartmentRepository;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
   @Override
   public DepartmentDto create(CreateRequest request) {
-    DepartmentEntity department = request.toEntity();
+    Department department = request.toEntity();
 
     // name 중복 체크
     if(departmentRepository.existsByName(department.getName())) {
@@ -36,7 +35,7 @@ public class DepartmentServiceImpl implements DepartmentService {
       throw new IllegalArgumentException("Department foundedDate cannot be empty");
     }
 
-    DepartmentEntity savedDepartment = departmentRepository.save(department);
+    Department savedDepartment = departmentRepository.save(department);
 
     return DepartmentDto.from(savedDepartment);
   }
@@ -45,7 +44,7 @@ public class DepartmentServiceImpl implements DepartmentService {
   public DepartmentDto update(UUID id, CreateRequest request) {
 
 
-    DepartmentEntity entity = departmentRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Department not found"));
+    Department entity = departmentRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Department not found"));
 
     // 비어있는지 확인
     if(request.getName() == null || request.getName().isEmpty()){
@@ -68,14 +67,14 @@ public class DepartmentServiceImpl implements DepartmentService {
     entity.setDescription(request.getDescription());
     entity.setEstablishedDate(request.getEstablishedDate());
 
-    DepartmentEntity savedDepartment = departmentRepository.save(entity);
+    Department savedDepartment = departmentRepository.save(entity);
 
     return DepartmentDto.from(savedDepartment);
   }
 
   @Override
   public DepartmentDto delete(UUID id) {
-    DepartmentEntity entity = departmentRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Department not found"));
+    Department entity = departmentRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Department not found"));
     if(entity.getEmployeeCount() != 0){
       throw new IllegalArgumentException("소속되어있는 직원이 있어 부서를 삭제할 수 없습니다.");
     }
