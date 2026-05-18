@@ -24,13 +24,13 @@ public class DepartmentServiceImpl implements DepartmentService {
     }
 
     // 비어있는지 확인
-    if(request.name() == null || request.name().isEmpty()){
+    if(department.getName() == null || department.getName().isEmpty()){
       throw new IllegalArgumentException("Department name cannot be empty");
     }
-    if(request.description() == null || request.description().isEmpty()){
+    if(department.getDescription() == null || department.getDescription().isEmpty()){
       throw new IllegalArgumentException("Department description cannot be empty");
     }
-    if (request.foundedDate() == null) {
+    if (department.getEstablishedDate() == null) {
       throw new IllegalArgumentException("Department foundedDate cannot be empty");
     }
 
