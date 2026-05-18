@@ -38,7 +38,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     DepartmentEntity savedDepartment = departmentRepository.save(department);
 
-    return DepartmentDto.fromEntity(savedDepartment);
+    return DepartmentDto.from(savedDepartment);
   }
 
   @Override
@@ -70,6 +70,18 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     DepartmentEntity savedDepartment = departmentRepository.save(entity);
 
-    return DepartmentDto.fromEntity(savedDepartment);
+    return DepartmentDto.from(savedDepartment);
   }
+
+  @Override
+  public DepartmentDto delete(UUID id) {
+    DepartmentEntity entity = departmentRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Department not found"));
+    if(entity.getEmployeeCount() != 0){
+      throw new IllegalArgumentException("소속되어있는 직원이 있어 부서를 삭제할 수 없습니다.");
+    }
+    else departmentRepository.deleteById(id);
+
+    return  DepartmentDto.from(entity);
+  }
+
 }

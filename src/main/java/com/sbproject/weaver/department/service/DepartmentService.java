@@ -7,4 +7,5 @@ import java.util.UUID;
 public interface DepartmentService {
   DepartmentDto create(CreateRequest request);
   DepartmentDto update(UUID id, CreateRequest request);
+  DepartmentDto delete(UUID id);
 }
