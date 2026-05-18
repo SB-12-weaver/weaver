@@ -82,7 +82,7 @@ CREATE TABLE backup_histories (
     id UUID PRIMARY KEY,
     worker VARCHAR(100) NOT NULL,
     started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    ended_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    ended_at TIMESTAMP WITH TIME ZONE,
     status VARCHAR(30) NOT NULL,
     file_id UUID,
 

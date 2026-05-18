@@ -3,6 +3,7 @@ spring:
     init:
 #      mode: always   # 항상 data.sql 실행 # 위험한 옵션!! 개발 DB가 모두 날라갈수 있음으로 주의!
       schema-locations: classpath:hrbank_schema_latest_erd.sql
+      data-locations: classpath:data.sql
   config:
     activate:
       on-profile: dev
@@ -20,7 +21,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none #create-drop #update
 
   h2:
     console:
