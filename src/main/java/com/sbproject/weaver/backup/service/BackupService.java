@@ -57,8 +57,6 @@ public class BackupService {
             return backupMapper.toBackupDto(backup);
         }
 
-        backupRepository.save(backup);
-
         try {
             byte[] csvFile = createCsvFile();
             String fileName = String.format(
@@ -94,7 +92,7 @@ public class BackupService {
 
             backup.fail(Instant.now(), errorFile);
         }
-
+        backupRepository.save(backup);
         return backupMapper.toBackupDto(backup);
     }
 
