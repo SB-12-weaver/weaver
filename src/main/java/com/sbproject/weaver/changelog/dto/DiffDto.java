@@ -6,7 +6,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DiffResponse {
+public class DiffDto {
     private String propertyName;
     private String before;
     private String after;

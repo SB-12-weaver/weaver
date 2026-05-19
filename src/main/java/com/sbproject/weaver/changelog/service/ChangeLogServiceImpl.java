@@ -1,5 +1,6 @@
 package com.sbproject.weaver.changelog.service;
 
+import com.sbproject.weaver.changelog.dto.ChangeLogDto;
 import com.sbproject.weaver.changelog.dto.ChangeLogResponse;
 import com.sbproject.weaver.changelog.dto.ChangeLogSearchRequest;
 import com.sbproject.weaver.changelog.entity.ChangeLogType;
@@ -23,7 +24,7 @@ public class ChangeLogServiceImpl implements ChangeLogService {
 
     @Transactional
     @Override
-    public CursorPageResponse<ChangeLogResponse> search(String cursor, int size, ChangeLogSearchRequest request) {
+    public CursorPageResponse<ChangeLogDto> search(String cursor, int size, ChangeLogSearchRequest request) {
         ChangeLogSearchRequest req = request.withDefaults();
 
         ChangeLogType type = (req.getType() == null || req.getType().isBlank() || req.getType().equals("ALL"))
@@ -32,7 +33,7 @@ public class ChangeLogServiceImpl implements ChangeLogService {
 
         Slice<EmployeeChangeLog> slice = changeLogRepository.search(cursor, size, req, type);
 
-        List<ChangeLogResponse> content = slice.getContent().stream()
+        List<ChangeLogDto> content = slice.getContent().stream()
                 .map(changeLogMapper::roResponse)
                 .toList();
         String nextCursor = null;
@@ -43,7 +44,7 @@ public class ChangeLogServiceImpl implements ChangeLogService {
 
         Long totalElements = changeLogRepository.count(req, type);
 
-        return CursorPageResponse.<ChangeLogResponse>builder()
+        return CursorPageResponse.<ChangeLogDto>builder()
                 .content(content)
                 .nextCursor(nextCursor)
                 .nextIdAfter(null)

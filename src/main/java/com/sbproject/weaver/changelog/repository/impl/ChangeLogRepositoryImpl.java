@@ -15,6 +15,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
@@ -34,7 +35,46 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepository {
         BooleanBuilder where = new BooleanBuilder();
 
         if (cursor != null) {
-            where.and(log.id.gt(UUID.fromString(cursor)));
+            where.and(log.id.lt(UUID.fromString(cursor)));
+//            UUID cursorId = UUID.fromString(cursor);
+//            EmployeeChangeLog cursorRow = queryFactory
+//                    .selectFrom(log)
+//                    .where(log.id.eq(cursorId))
+//                    .fetchOne();
+//
+//            if (cursorRow != null) {
+//                boolean isAsc = "asc".equalsIgnoreCase(search.getSortDirection());
+//
+//                if ("ipAddress".equals(search.getSortField())) {
+//                    // ipAddress 정렬: (ipAddress, id) 복합 커서
+//                    String cursorIp = cursorRow.getIpAddress();
+//                    if (isAsc) {
+//                        where.and(
+//                                log.ipAddress.gt(cursorIp)
+//                                        .or(log.ipAddress.eq(cursorIp).and(log.id.gt(cursorId)))
+//                        );
+//                    } else {
+//                        where.and(
+//                                log.ipAddress.lt(cursorIp)
+//                                        .or(log.ipAddress.eq(cursorIp).and(log.id.gt(cursorId)))
+//                        );
+//                    }
+//                } else {
+//                    // at 정렬 (default): (at, id) 복합 커서
+//                    Instant cursorAt = cursorRow.getAt();
+//                    if (isAsc) {
+//                        where.and(
+//                                log.at.gt(cursorAt)
+//                                        .or(log.at.eq(cursorAt).and(log.id.gt(cursorId)))
+//                        );
+//                    } else {
+//                        where.and(
+//                                log.at.lt(cursorAt)
+//                                        .or(log.at.eq(cursorAt).and(log.id.gt(cursorId)))
+//                        );
+//                    }
+//                }
+//            }
         }
 
         if (search.getEmployeeNumber() != null && !search.getEmployeeNumber().isBlank()) {

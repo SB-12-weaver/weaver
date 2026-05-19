@@ -1,5 +1,6 @@
 package com.sbproject.weaver.changelog.controller;
 
+import com.sbproject.weaver.changelog.dto.ChangeLogDto;
 import com.sbproject.weaver.changelog.dto.ChangeLogResponse;
 import com.sbproject.weaver.changelog.dto.ChangeLogSearchRequest;
 import com.sbproject.weaver.changelog.service.ChangeLogService;
@@ -19,7 +20,7 @@ public class ChangeLogController {
     private final ChangeLogService changeLogService;
 
     @GetMapping("")
-    public ResponseEntity<CursorPageResponse<ChangeLogResponse>> search(
+    public ResponseEntity<CursorPageResponse<ChangeLogDto>> search(
             HttpServletRequest httpRequest, //추후 삭제
             @RequestParam(required = false) Long nextIdAfter,
             @RequestParam(required = false) String cursor,

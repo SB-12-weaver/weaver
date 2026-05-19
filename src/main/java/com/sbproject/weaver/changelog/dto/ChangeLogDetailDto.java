@@ -1,7 +1,6 @@
 package com.sbproject.weaver.changelog.dto;
 
 import com.sbproject.weaver.changelog.entity.ChangeLogType;
-import com.sbproject.weaver.changelog.entity.EmployeeChangeDiff;
 import lombok.*;
 
 import java.time.Instant;
@@ -12,7 +11,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChangeLogDetailResponse {
+public class ChangeLogDetailDto {
     private UUID id;
     private ChangeLogType type;
     private String employeeNumber;
@@ -21,6 +20,6 @@ public class ChangeLogDetailResponse {
     private Instant at;
     private String employeeName;
     private UUID profileImageId;
-    private List<DiffResponse> diffs;
+    private List<DiffDto> diffs;
 
 }
