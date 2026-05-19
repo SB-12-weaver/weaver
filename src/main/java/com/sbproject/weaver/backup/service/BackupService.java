@@ -15,35 +15,42 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class BackupService {
-    private final EmployeeRepository employeeRepository;
+
     private final BackupRepository backupRepository;
-    private final BackupMapper backupMapper;
+    private final EmployeeRepository employeeRepository;
     private final FileService fileService;
+    private final BackupMapper backupMapper;
 
     @Transactional
     public BackupDto runBackup(String worker) {
-        BackupEntity backup = BackupEntity.builder().worker(worker).startedAt(Instant.now()).build();
+        BackupEntity backup = BackupEntity.builder()
+                .worker(worker)
+                .startedAt(Instant.now())
+                .build();
 
         Instant lastSuccessTime = backupRepository.findFirstByStatusOrderByStartedAtDesc(BackupStatus.COMPLETED)
                 .map(BackupEntity::getEndedAt)
                 .orElse(Instant.MIN);
 
         boolean needsBackup = employeeRepository.existsByUpdatedAtAfter(lastSuccessTime);
+
         if (!needsBackup) {
             backup.skip(Instant.now());
             backupRepository.save(backup);
@@ -54,39 +61,120 @@ public class BackupService {
 
         try {
             byte[] csvFile = createCsvFile();
-            String fileName = String.format("employee_backup_%s_%s.csv",
+            String fileName = String.format(
+                    "employee_backup_%s_%s.csv",
                     backup.getId().toString().substring(0, 8),
-                    LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+                    LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+            );
 
-            FileEntity savedFile = fileService.save(fileName, "text/csv", csvFile, FilePurpose.BACKUP_CSV);
+            FileEntity savedFile = fileService.save(
+                    fileName,
+                    "text/csv",
+                    csvFile,
+                    FilePurpose.BACKUP_CSV
+            );
+
             backup.complete(Instant.now(), savedFile);
         } catch (Exception e) {
             log.error("백업 작업 중 오류 발생", e);
-            byte[] errorLog = e.toString().getBytes(StandardCharsets.UTF_8);
-            String fileName = String.format("error_%s.log",
-                    LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
 
-            FileEntity errorFile = fileService.save(fileName, "text/plain", errorLog, FilePurpose.BACKUP_LOG);
+            byte[] errorLog = e.toString().getBytes(StandardCharsets.UTF_8);
+
+            String fileName = String.format(
+                    "error_%s.log",
+                    LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+            );
+
+            FileEntity errorFile = fileService.save(
+                    fileName,
+                    "text/plain",
+                    errorLog,
+                    FilePurpose.BACKUP_LOG
+            );
+
             backup.fail(Instant.now(), errorFile);
         }
 
         return backupMapper.toBackupDto(backup);
     }
 
-    private byte[] createCsvFile() throws IOException {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    @Transactional(readOnly = true)
+    public BackupDto getLatestBackup(BackupStatus status) {
+        BackupEntity backup = backupRepository.findFirstByStatusOrderByStartedAtDesc(status)
+                .orElseThrow(() -> new IllegalArgumentException("백업 이력이 없습니다. status=" + status));
 
-        stream.write(0xEF);
-        stream.write(0xBB);
-        stream.write(0xBF);
+        return backupMapper.toBackupDto(backup);
+    }
 
-        try (OutputStreamWriter writer = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
-             CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT.builder()
-                     .setHeader("ID", "직원번호", "이름", "이메일", "부서", "직급", "입사일", "상태")
-                     .build())) {
-            List<Employee> employees = employeeRepository.findAll();
+    @Transactional(readOnly = true)
+    public CursorPageResponse<BackupDto> findBackups(
+            String worker,
+            BackupStatus status,
+            String from,
+            String to,
+            String cursor,
+            Long idAfter,
+            int size,
+            String sortField,
+            String sortDirection
+    ) {
+        Instant fromInstant = parseInstantOrNull(from);
+        Instant toInstant = parseInstantOrNull(to);
+
+        PageRequest pageable = PageRequest.of(0, size);
+
+        Page<BackupDto> page = backupRepository.findBackups(
+                worker,
+                status,
+                fromInstant,
+                toInstant,
+                cursor,
+                sortDirection,
+                sortField,
+                pageable
+        );
+
+        List<BackupDto> content = page.getContent();
+
+        boolean hasNext = content.size() == size;
+
+        String nextCursor = null;
+
+        if (hasNext && !content.isEmpty()) {
+            BackupDto last = content.get(content.size() - 1);
+            nextCursor = last.getId().toString();
+        }
+
+        return CursorPageResponse.<BackupDto>builder()
+                .content(content)
+                .nextCursor(nextCursor)
+                .nextIdAfter(null)
+                .size(size)
+                .totalElements(page.getTotalElements())
+                .hasNext(hasNext)
+                .build();
+    }
+
+    private byte[] createCsvFile() {
+        List<Employee> employees = employeeRepository.findAll();
+
+        try (
+                StringWriter writer = new StringWriter();
+                CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.builder()
+                        .setHeader(
+                                "id",
+                                "employeeNumber",
+                                "name",
+                                "email",
+                                "departmentId",
+                                "position",
+                                "hireDate",
+                                "status"
+                        )
+                        .build())
+        ) {
             for (Employee employee : employees) {
-                printer.printRecord(
+                csvPrinter.printRecord(
                         employee.getId(),
                         employee.getEmployeeNumber(),
                         employee.getName(),
@@ -97,16 +185,20 @@ public class BackupService {
                         employee.getStatus()
                 );
             }
-            printer.flush();
-        }
 
-        return stream.toByteArray();
+            csvPrinter.flush();
+            return writer.toString().getBytes(StandardCharsets.UTF_8);
+
+        } catch (IOException e) {
+            throw new RuntimeException("CSV 파일 생성 실패", e);
+        }
     }
 
-    @Transactional(readOnly = true)
-    public BackupDto getLatestBackup(BackupStatus status) {
-        return backupRepository.findFirstByStatusOrderByStartedAtDesc(status)
-                .map(backupMapper::toBackupDto)
-                .orElse(null);
+    private Instant parseInstantOrNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        return Instant.parse(value);
     }
 }
