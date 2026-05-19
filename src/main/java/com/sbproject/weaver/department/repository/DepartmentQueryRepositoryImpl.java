@@ -4,14 +4,12 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.sbproject.weaver.common.dto.CursorPageResponse;
 import com.sbproject.weaver.department.dto.DepartmentDto;
 import com.sbproject.weaver.department.dto.DepartmentSearchRequest;
 import com.sbproject.weaver.department.entity.QDepartment;
 import com.sbproject.weaver.employee.entity.QEmployee;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,7 +20,7 @@ import static com.querydsl.core.types.ExpressionUtils.as;
 
 @Repository
 @RequiredArgsConstructor
-public class DepartmentRepositoryGet implements DepartmentRepository{
+public class DepartmentQueryRepositoryImpl implements DepartmentQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     private static final QDepartment d = QDepartment.department;
@@ -51,7 +49,7 @@ public class DepartmentRepositoryGet implements DepartmentRepository{
     }
 
     @Override
-    public Slice<DepartmentDto> searchSlice(UUID cursor, int size, DepartmentSearchRequest search) {
+    public CursorPageResponse<DepartmentDto> searchSlice(UUID cursor, int size, DepartmentSearchRequest search) {
 
         BooleanBuilder where = new BooleanBuilder();
         boolean isDesc = "desc".equals(search.getSortDirection());
@@ -92,7 +90,19 @@ public class DepartmentRepositoryGet implements DepartmentRepository{
         boolean hasNext = rows.size() > size;
         List<DepartmentDto> content = hasNext ? rows.subList(0, size) : rows;
 
-        return new SliceImpl<>(content, PageRequest.ofSize(size), hasNext);
+        String nextCursor = (hasNext && !content.isEmpty())
+                ? content.get(content.size() - 1).getId().toString()
+                : null;
+
+        return CursorPageResponse.<DepartmentDto>builder()
+                .content(content)
+                .size(size)
+                .hasNext(hasNext)
+                .nextCursor(nextCursor)
+                .nextIdAfter(0L)
+                .totalElements(countSearch(search))
+                .build();
+
     }
 
     @Override
