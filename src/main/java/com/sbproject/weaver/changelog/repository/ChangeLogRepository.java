@@ -7,4 +7,6 @@ import org.springframework.data.domain.Slice;
 
 public interface ChangeLogRepository {
     Slice<EmployeeChangeLog> search(String cursor, int size, ChangeLogSearchRequest search, ChangeLogType type);
+
+    Long count(ChangeLogSearchRequest search, ChangeLogType type);
 }

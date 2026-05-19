@@ -1,6 +1,5 @@
 package com.sbproject.weaver.changelog.dto;
 
-import com.sbproject.weaver.changelog.entity.ChangeLogType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

@@ -15,7 +15,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -52,10 +52,15 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepository {
             where.and(log.ipAddress.containsIgnoreCase(search.getIpAddress()));
         }
 
-        if (search.getAtFrom() != null && search.getAtTo() == null) {
-            where.and(log.at.goe(search.getAtFrom()));
+        if (search.getAtFrom() != null && search.getAtTo() != null) {
+            where.and(log.at.between(
+                    search.getAtFrom(),
+                    search.getAtTo().plus(1, ChronoUnit.DAYS)
+            ));
         } else if (search.getAtFrom() != null) {
-            where.and(log.at.between(search.getAtFrom(), search.getAtTo()));
+            where.and(log.at.goe(search.getAtFrom()));
+        } else if (search.getAtTo() != null) {
+            where.and(log.at.loe(search.getAtTo().plus(1, ChronoUnit.DAYS)));
         }
 
         List<EmployeeChangeLog> rows = queryFactory
@@ -69,6 +74,45 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepository {
         if (hasNext) rows = rows.subList(0, size);
 
         return new SliceImpl<>(rows, PageRequest.ofSize(size), hasNext);
+    }
+
+    @Override
+    public Long count(ChangeLogSearchRequest search, ChangeLogType type) {
+        BooleanBuilder where = new BooleanBuilder();
+
+        if (search.getEmployeeNumber() != null && !search.getEmployeeNumber().isBlank()) {
+            where.and(log.employeeNumber.containsIgnoreCase(search.getEmployeeNumber()));
+        }
+
+        if (type != null) {
+            where.and(log.type.eq(type));
+        }
+        if (search.getMemo() != null && !search.getMemo().isBlank()) {
+            where.and(log.memo.containsIgnoreCase(search.getMemo()));
+        }
+
+        if (search.getIpAddress() != null && !search.getIpAddress().isBlank()) {
+            where.and(log.ipAddress.containsIgnoreCase(search.getIpAddress()));
+        }
+
+        if (search.getAtFrom() != null && search.getAtTo() != null) {
+            where.and(log.at.between(
+                    search.getAtFrom(),
+                    search.getAtTo().plus(1, ChronoUnit.DAYS)
+            ));
+        } else if (search.getAtFrom() != null) {
+            where.and(log.at.goe(search.getAtFrom()));
+        } else if (search.getAtTo() != null) {
+            where.and(log.at.loe(search.getAtTo().plus(1, ChronoUnit.DAYS)));
+        }
+
+        Long count = queryFactory
+                .select(log.count())
+                .from(log)
+                .where(where)
+                .fetchOne();
+
+        return count != null ? count : 0L;
     }
 
     private OrderSpecifier<?> getOrderSpecifier(String sortField, String sortDirection) {

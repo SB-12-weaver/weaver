@@ -41,11 +41,14 @@ public class ChangeLogServiceImpl implements ChangeLogService {
             nextCursor = content.get(content.size() - 1).getId().toString();
         }
 
+        Long totalElements = changeLogRepository.count(req, type);
+
         return CursorPageResponse.<ChangeLogResponse>builder()
                 .content(content)
                 .nextCursor(nextCursor)
                 .nextIdAfter(null)
                 .size(size)
+                .totalElements(totalElements)
                 .hasNext(slice.hasNext())
                 .build();
     }
