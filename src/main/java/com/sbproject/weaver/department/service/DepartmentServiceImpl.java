@@ -3,6 +3,7 @@ package com.sbproject.weaver.department.service;
 import com.sbproject.weaver.department.dto.CreateRequest;
 import com.sbproject.weaver.department.dto.DepartmentDto;
 import com.sbproject.weaver.department.entity.Department;
+import com.sbproject.weaver.department.repository.DepartmentRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
