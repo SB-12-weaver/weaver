@@ -57,3 +57,7 @@ myblog:
     type: local
     local:
       root-path: .discodeit/storage
+
+weaver:
+  backup:
+    interval: 3600000
