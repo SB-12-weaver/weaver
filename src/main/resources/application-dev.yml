@@ -9,15 +9,17 @@ spring:
       on-profile: dev
 
   datasource:
+
     # 인메모리 (권장)
-    url: jdbc:h2:mem:blogdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    #    url: jdbc:h2:mem:blogdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
     # 임베디드 (data가 넣어지지 않음)
-#    url: jdbc:h2:file:./data/blogdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;AUTO_SERVER=TRUE
+    #    url: jdbc:h2:file:./data/blogdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;AUTO_SERVER=TRUE
     # 서버모드 -> h2 DB 실행 필요
-#    url: jdbc:h2:tcp://localhost:9092/~/blogdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    #    url: jdbc:h2:tcp://localhost:9092/~/blogdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    url: jdbc:postgresql://localhost:5432/waever1
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: 1234
 
   jpa:
     hibernate:

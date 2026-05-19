@@ -11,14 +11,37 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/backups")
 public class BackupController {
 
     private final BackupService backupService;
+
+    @GetMapping
+    public ResponseEntity<CursorPageResponse<BackupDto>> findAll(
+            @RequestParam(required = false) String worker,
+            @RequestParam(required = false) BackupStatus status,
+            @RequestParam(required = false) String startedAtFrom,
+            @RequestParam(required = false) String startedAtTo,
+            @RequestParam(required = false) Long idAfter,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "startedAt") String sortField,
+            @RequestParam(defaultValue = "DESC") String sortDirection
+    ) {
+        return ResponseEntity.ok(backupService.findBackups(
+                worker,
+                status,
+                startedAtFrom,
+                startedAtTo,
+                cursor,
+                idAfter,
+                size,
+                sortField,
+                sortDirection
+        ));
+    }
 
     @PostMapping
     public ResponseEntity<BackupDto> create(HttpServletRequest request) {
