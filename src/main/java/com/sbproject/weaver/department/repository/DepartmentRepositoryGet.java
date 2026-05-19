@@ -7,13 +7,10 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sbproject.weaver.common.dto.CursorPageResponse;
 import com.sbproject.weaver.department.dto.DepartmentDto;
 import com.sbproject.weaver.department.dto.DepartmentSearchRequest;
-import com.sbproject.weaver.department.entity.Department;
 import com.sbproject.weaver.department.entity.QDepartment;
 import com.sbproject.weaver.employee.entity.QEmployee;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,6 +19,7 @@ import java.util.UUID;
 
 import static com.querydsl.core.types.ExpressionUtils.as;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class DepartmentRepositoryGet implements DepartmentRepositoryCustom{
@@ -91,11 +89,13 @@ public class DepartmentRepositoryGet implements DepartmentRepositoryCustom{
                 .limit(size + 1L)
                 .fetch();
 
+        log.info("조회된 총 개수(size + 1): {}", rows.size());
+
         boolean hasNext = rows.size() > size;
         List<DepartmentDto> content = hasNext ? rows.subList(0, size) : rows;
 
         String nextCursor = (hasNext && !content.isEmpty())
-                ? content.get(content.size() - 1).getId().toString()
+                ? content.get(content.size()-1).getId().toString()
                 : null;
 
         return CursorPageResponse.<DepartmentDto>builder()
@@ -103,7 +103,7 @@ public class DepartmentRepositoryGet implements DepartmentRepositoryCustom{
                 .size(size)
                 .hasNext(hasNext)
                 .nextCursor(nextCursor)
-                .nextIdAfter(0L)
+//                .nextIdAfter(nextCursor) 왜 있는지 모르겠음
                 .totalElements(countSearch(search))
                 .build();
     }
