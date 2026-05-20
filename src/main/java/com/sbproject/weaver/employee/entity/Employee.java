@@ -2,22 +2,24 @@ package com.sbproject.weaver.employee.entity;
 
 import com.sbproject.weaver.common.entity.BaseEntity;
 import com.sbproject.weaver.department.entity.Department;
+import com.sbproject.weaver.file.entity.FileEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@SuperBuilder
 @Entity
 @Table(name = "employees")
-@Getter
-@SuperBuilder
-@ToString
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Employee extends BaseEntity {
-    // TODO : 테스트용 임시 엔티티! 나중에 머지따라 달라짐!!!
+
     @Column(name = "name", length = 100, nullable = false)
     private String name;
 
@@ -31,8 +33,9 @@ public class Employee extends BaseEntity {
     @JoinColumn(name = "department_id", nullable = false)
     private Department department;
 
-    @Column(name = "profile_image_id", unique = true)
-    private UUID profileImageId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_image_id", unique = true)
+    private FileEntity profileImage;
 
     @Column(name = "position", length = 100, nullable = false)
     private String position;
@@ -40,6 +43,39 @@ public class Employee extends BaseEntity {
     @Column(name = "hire_date", nullable = false)
     private LocalDate hireDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 30, nullable = false)
-    private String status;
+    private EmployeeStatus status;
+
+    public void updateInfo(String name, String email, String position,
+                           LocalDate hireDate, Department department, EmployeeStatus status) {
+        if (name != null) {
+            this.name = name;
+        }
+
+        if (email != null) {
+            this.email = email;
+        }
+
+        if (position != null) {
+            this.position = position;
+        }
+
+        if (hireDate != null) {
+            this.hireDate = hireDate;
+        }
+
+        if (department != null) {
+            this.department = department;
+        }
+
+        if (status != null) {
+            this.status = status;
+        }
+    }
+
+
+    public void updateProfileImage(FileEntity profileImage) {
+        this.profileImage = profileImage;
+    }
 }
