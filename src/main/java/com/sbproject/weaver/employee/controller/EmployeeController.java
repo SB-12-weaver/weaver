@@ -20,21 +20,6 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
 
-    @PostMapping
-    public ResponseEntity<EmployeeDto> create(
-            @RequestPart("employee") EmployeeCreateRequest request,
-            @RequestPart(value = "profile", required = false) MultipartFile profile
-    ) {
-        EmployeeDto response = employeeService.create(request, profile);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<EmployeeDto> findById(@PathVariable UUID id) {
-        EmployeeDto response = employeeService.findById(id);
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping
     public ResponseEntity<CursorPageResponse<EmployeeDto>> findAll(
             @RequestParam(required = false) String nameOrEmail,
@@ -67,22 +52,6 @@ public class EmployeeController {
 
         CursorPageResponse<EmployeeDto> response = employeeService.findAll(condition);
         return ResponseEntity.ok(response);
-    }
-
-    @PatchMapping("/{id}")
-    public ResponseEntity<EmployeeDto> update(
-            @PathVariable UUID id,
-            @RequestPart("employee") EmployeeUpdateRequest request,
-            @RequestPart(value = "profile", required = false) MultipartFile profile
-    ) {
-        EmployeeDto response = employeeService.update(id, request, profile);
-        return ResponseEntity.ok(response);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        employeeService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/stats/trend")

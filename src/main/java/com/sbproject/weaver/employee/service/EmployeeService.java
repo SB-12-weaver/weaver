@@ -11,15 +11,7 @@ import java.util.UUID;
 @Service
 public interface EmployeeService {
 
-    EmployeeDto create(EmployeeCreateRequest request, MultipartFile profile);
-
-    EmployeeDto findById(UUID id);
-
     CursorPageResponse<EmployeeDto> findAll(EmployeeSearchCondition condition);
-
-    EmployeeDto update(UUID id, EmployeeUpdateRequest request, MultipartFile profile);
-
-    void delete(UUID id);
 
     List<EmployeeTrendDto> getTrend(EmployeeTrendCondition condition);
 
