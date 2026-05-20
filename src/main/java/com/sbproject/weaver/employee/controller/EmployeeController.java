@@ -82,13 +82,18 @@ public class EmployeeController {
     @GetMapping("/count")
     public ResponseEntity<Long> count(
             @RequestParam(required = false) EmployeeStatus status,
-            @RequestParam(required = false) LocalDate from,
-            @RequestParam(required = false) LocalDate to
+            @RequestParam(name = "fromDate", required = false) LocalDate fromDate,
+            @RequestParam(name = "toDate", required = false) LocalDate toDate,
+            @RequestParam(name = "hireDateFrom", required = false) LocalDate hireDateFrom,
+            @RequestParam(name = "hireDateTo", required = false) LocalDate hireDateTo
     ) {
+        LocalDate resolvedFrom = fromDate != null ? fromDate : hireDateFrom;
+        LocalDate resolvedTo = toDate != null ? toDate : hireDateTo;
+
         EmployeeCountCondition condition = new EmployeeCountCondition(
                 status,
-                from,
-                to
+                resolvedFrom,
+                resolvedTo
         );
 
         Long response = employeeService.count(condition);
@@ -102,7 +107,16 @@ public class EmployeeController {
             @RequestParam(defaultValue = "month") String unit
     ) {
         LocalDate resolvedTo = to != null ? to : LocalDate.now();
-        LocalDate resolvedFrom = from != null ? from : resolvedTo.minusYears(1);
+
+        LocalDate resolvedFrom = from != null
+                ? from
+                : switch (unit) {
+            case "day" -> resolvedTo.minusMonths(1);
+            case "month" -> resolvedTo.minusYears(2);
+            case "quarter" -> resolvedTo.minusYears(5);
+            case "year" -> resolvedTo.minusYears(20);
+            default -> resolvedTo.minusYears(1);
+        };
 
         EmployeeTrendCondition condition = new EmployeeTrendCondition(
                 resolvedFrom,
