@@ -155,4 +155,9 @@ public class EmployeeServiceImpl implements EmployeeService{
         return employeeRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("직원을 찾을 수 없습니다. id=" + id));
     }
+
+    @Override
+    public List<EmployeeDistributionDto> getDistribution(EmployeeSearchDistribution searchDistribution) {
+        return employeeRepository.distribution(searchDistribution);
+    }
 }

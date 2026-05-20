@@ -11,5 +11,7 @@ public interface EmployeeRepositoryCustom {
 
     List<EmployeeTrendDto> getTrend(EmployeeTrendCondition condition);
 
+    List<EmployeeDistributionDto> distribution(EmployeeSearchDistribution searchDistribution);
+
     Long countEmployees(EmployeeCountCondition condition);
 }
