@@ -24,4 +24,6 @@ public interface EmployeeService {
     List<EmployeeTrendDto> getTrend(EmployeeTrendCondition condition);
 
     Long count(EmployeeCountCondition condition);
+
+    List<EmployeeDistributionDto> getDistribution(EmployeeSearchDistribution searchDistribution);
 }

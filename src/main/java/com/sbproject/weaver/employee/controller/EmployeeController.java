@@ -120,5 +120,18 @@ public class EmployeeController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/stats/distribution")
+    public ResponseEntity<List<EmployeeDistributionDto>> getDistribution(
+            @RequestParam(required = false) String groupBy,
+            @RequestParam(required = false) EmployeeStatus status
+    ) {
 
+        EmployeeSearchDistribution search = EmployeeSearchDistribution.builder()
+                .groupBy(groupBy)
+                .status(status)
+                .build();
+
+        List<EmployeeDistributionDto> response = employeeService.getDistribution(search);
+        return ResponseEntity.ok(response);
+    }
 }
