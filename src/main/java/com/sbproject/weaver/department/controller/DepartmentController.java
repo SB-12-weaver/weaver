@@ -29,9 +29,9 @@ public class DepartmentController {
 
   @GetMapping
   public ResponseEntity<CursorPageResponse<DepartmentDto>> findAll(
-      @RequestParam(required = false) UUID cursor,
-      @RequestParam(defaultValue = "10") int size,
-      @ModelAttribute DepartmentSearchRequest search
+          @RequestParam(required = false) UUID cursor,
+          @RequestParam(defaultValue = "10") int size,
+          @ModelAttribute DepartmentSearchRequest search
   ) {
     CursorPageResponse<DepartmentDto> response = departmentService.findSlice(cursor, size, search);
     return ResponseEntity.ok(response);
@@ -42,16 +42,16 @@ public class DepartmentController {
   public ResponseEntity<DepartmentDto> create(@RequestBody CreateRequest request) {
     DepartmentDto createdDepartment = departmentService.create(request);
     return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(createdDepartment);
+            .status(HttpStatus.CREATED)
+            .body(createdDepartment);
   }
 
   @PatchMapping("/{id}")
   public ResponseEntity<DepartmentDto> update(@PathVariable UUID id, @RequestBody CreateRequest request) {
     DepartmentDto updateDepartment = departmentService.update(id, request);
     return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(updateDepartment);
+            .status(HttpStatus.OK)
+            .body(updateDepartment);
   }
 
 
@@ -60,9 +60,14 @@ public class DepartmentController {
   public ResponseEntity<DepartmentDto> delete(@PathVariable UUID id) {
     DepartmentDto deleteDepartment = departmentService.delete(id);
     return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(deleteDepartment);
+            .status(HttpStatus.OK)
+            .body(deleteDepartment);
   }
 
+  @GetMapping("/{id}")
+  public ResponseEntity<DepartmentDto> getDepartmentDetail(@PathVariable UUID id) {
+    DepartmentDto department = departmentService.findById(id);
+    return ResponseEntity.ok(department);
+  }
 
 }
