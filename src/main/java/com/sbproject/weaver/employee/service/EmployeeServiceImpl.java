@@ -31,97 +31,9 @@ public class EmployeeServiceImpl implements EmployeeService{
     private final FileService fileService;
 
     @Override
-    @Transactional
-    public EmployeeDto create(EmployeeCreateRequest request, MultipartFile profile) {
-        if (employeeRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-        }
-
-        Department department = departmentRepository.findById(request.getDepartmentId())
-                .orElseThrow(() -> new NoSuchElementException("부서를 찾을 수 없습니다."));
-
-        FileEntity profileImage = null;
-        if (profile != null && !profile.isEmpty()) {
-            profileImage = fileService.saveMultipartFile(profile, FilePurpose.PROFILE);
-        }
-
-        Employee employee = Employee.builder()
-                .name(request.getName())
-                .email(request.getEmail())
-                .employeeNumber(generateEmployeeNumber())
-                .department(department)
-                .profileImage(profileImage)
-                .position(request.getPosition())
-                .hireDate(request.getHireDate())
-                .status(EmployeeStatus.ACTIVE)
-                .build();
-
-        Employee savedEmployee = employeeRepository.save(employee);
-
-        return employeeMapper.toDto(savedEmployee);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public EmployeeDto findById(UUID id) {
-        Employee employee = getEmployeeOrThrow(id);
-        return employeeMapper.toDto(employee);
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public CursorPageResponse<EmployeeDto> findAll(EmployeeSearchCondition condition) {
         return employeeRepository.search(condition);
-    }
-
-    @Override
-    @Transactional
-    public EmployeeDto update(UUID id, EmployeeUpdateRequest request, MultipartFile profile) {
-        Employee employee = getEmployeeOrThrow(id);
-
-        if (request.getEmail() != null &&
-                employeeRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-        }
-
-        Department department = null;
-
-        if (request.getDepartmentId() != null) {
-            department = departmentRepository.findById(request.getDepartmentId())
-                    .orElseThrow(() -> new NoSuchElementException("부서를 찾을 수 없습니다. id=" + request.getDepartmentId()));
-        }
-
-        employee.updateInfo(
-                request.getName(),
-                request.getEmail(),
-                request.getPosition(),
-                request.getHireDate(),
-                department,
-                request.getStatus()
-        );
-
-        if (profile != null && !profile.isEmpty()) {
-            FileEntity oldProfileImage = employee.getProfileImage();
-            employee.updateProfileImage(fileService.saveMultipartFile(profile, FilePurpose.PROFILE));
-
-            if (oldProfileImage != null) {
-                fileService.delete(oldProfileImage.getId());
-            }
-        }
-
-        return employeeMapper.toDto(employee);
-    }
-
-    @Override
-    @Transactional
-    public void delete(UUID id) {
-        Employee employee = getEmployeeOrThrow(id);
-        FileEntity profileImage = employee.getProfileImage();
-        employeeRepository.delete(employee);
-
-        if (profileImage != null) {
-            fileService.delete(profileImage.getId());
-        }
     }
 
     @Override
@@ -136,25 +48,6 @@ public class EmployeeServiceImpl implements EmployeeService{
         return employeeRepository.countEmployees(condition);
     }
 
-    private String generateEmployeeNumber() {
-        int year = LocalDate.now().getYear();
-        long sequence = employeeRepository.count() + 1;
-
-        while (employeeRepository.existsByEmployeeNumber(formatEmployeeNumber(year, sequence))) {
-            sequence++;
-        }
-
-        return formatEmployeeNumber(year, sequence);
-    }
-
-    private String formatEmployeeNumber(int year, long sequence) {
-        return String.format("EMP-%d-%04d", year, sequence);
-    }
-
-    private Employee getEmployeeOrThrow(UUID id) {
-        return employeeRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("직원을 찾을 수 없습니다. id=" + id));
-    }
 
     @Override
     public List<EmployeeDistributionDto> getDistribution(EmployeeSearchDistribution searchDistribution) {
