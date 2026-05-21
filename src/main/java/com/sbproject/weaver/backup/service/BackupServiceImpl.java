@@ -240,7 +240,6 @@ public class BackupServiceImpl implements BackupService {
                         )
                         .build())
         ) {
-            Slice<Employee> page;
 
             while (true) {
                 List<EmployeeBackupRow> rows = employeeRepository.findBackupRows(offset, BACKUP_BATCH_SIZE);

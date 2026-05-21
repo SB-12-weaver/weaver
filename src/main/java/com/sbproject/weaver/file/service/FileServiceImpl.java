@@ -8,6 +8,7 @@ import com.sbproject.weaver.file.repository.FileRepository;
 import com.sbproject.weaver.file.storage.FileStorage;
 import com.sbproject.weaver.file.type.FilePurpose;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -65,7 +66,7 @@ public class FileServiceImpl implements FileService {
         String storedFileName = id + "_" + originalName;
         String storagePath = purpose.getDirectory() + "/" + storedFileName;
 
-        fileStorage.save(storagePath, bytes);
+        fileStorage.saveByte(storagePath, bytes);
 
         String resolvedContentType = resolveContentType(contentType, purpose);
 
@@ -105,7 +106,7 @@ public class FileServiceImpl implements FileService {
             String storedFileName = id + "_" + originalName;
             String storagePath = purpose.getDirectory() + "/" + storedFileName;
 
-            fileStorage.save(storagePath, sourcePath);
+            fileStorage.saveFile(storagePath, sourcePath);
 
             String resolvedContentType = resolveContentType(contentType, purpose);
 
@@ -134,9 +135,9 @@ public class FileServiceImpl implements FileService {
 
     @Override
     @Transactional(readOnly = true)
-    public byte[] download(UUID fileId) {
+    public Resource downloadResource(UUID fileId) {
         FileEntity fileEntity = getFileOrThrow(fileId);
-        return fileStorage.read(fileEntity.getStoragePath());
+        return fileStorage.loadAsResource(fileEntity.getStoragePath());
     }
 
     @Override
