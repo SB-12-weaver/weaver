@@ -10,10 +10,10 @@ spring:
       on-profile: prod
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/waever1
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:weaverdb}
     driver-class-name: org.postgresql.Driver
-    username: user1
-    password: 1234
+    username: ${PGUSER:user1}
+    password: ${PGPASSWORD:1234}
 
   jpa:
     hibernate:
