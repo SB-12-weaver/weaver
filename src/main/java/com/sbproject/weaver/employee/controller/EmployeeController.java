@@ -12,6 +12,7 @@ import com.sbproject.weaver.employee.dto.EmployeeTrendDto;
 import com.sbproject.weaver.employee.dto.EmployeeUpdateRequest;
 import com.sbproject.weaver.employee.entity.EmployeeStatus;
 import com.sbproject.weaver.employee.service.EmployeeService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,10 +39,11 @@ public class EmployeeController {
 
     @PostMapping
     public ResponseEntity<EmployeeDto> create(
+            HttpServletRequest httpRequest,
             @RequestPart("employee") EmployeeCreateRequest request,
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
-        EmployeeDto response = employeeService.create(request, profile);
+        EmployeeDto response = employeeService.create(request, profile, httpRequest);
         return ResponseEntity.ok(response);
     }
 
@@ -82,13 +84,18 @@ public class EmployeeController {
     @GetMapping("/count")
     public ResponseEntity<Long> count(
             @RequestParam(required = false) EmployeeStatus status,
-            @RequestParam(required = false) LocalDate from,
-            @RequestParam(required = false) LocalDate to
+            @RequestParam(name = "fromDate", required = false) LocalDate fromDate,
+            @RequestParam(name = "toDate", required = false) LocalDate toDate,
+            @RequestParam(name = "hireDateFrom", required = false) LocalDate hireDateFrom,
+            @RequestParam(name = "hireDateTo", required = false) LocalDate hireDateTo
     ) {
+        LocalDate resolvedFrom = fromDate != null ? fromDate : hireDateFrom;
+        LocalDate resolvedTo = toDate != null ? toDate : hireDateTo;
+
         EmployeeCountCondition condition = new EmployeeCountCondition(
                 status,
-                from,
-                to
+                resolvedFrom,
+                resolvedTo
         );
 
         Long response = employeeService.count(condition);
@@ -102,7 +109,16 @@ public class EmployeeController {
             @RequestParam(defaultValue = "month") String unit
     ) {
         LocalDate resolvedTo = to != null ? to : LocalDate.now();
-        LocalDate resolvedFrom = from != null ? from : resolvedTo.minusYears(1);
+
+        LocalDate resolvedFrom = from != null
+                ? from
+                : switch (unit) {
+            case "day" -> resolvedTo.minusMonths(1);
+            case "month" -> resolvedTo.minusYears(2);
+            case "quarter" -> resolvedTo.minusYears(5);
+            case "year" -> resolvedTo.minusYears(20);
+            default -> resolvedTo.minusYears(1);
+        };
 
         EmployeeTrendCondition condition = new EmployeeTrendCondition(
                 resolvedFrom,
@@ -138,19 +154,21 @@ public class EmployeeController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<EmployeeDto> update(
+            HttpServletRequest httpRequest,
             @PathVariable UUID id,
             @RequestPart("employee") EmployeeUpdateRequest request,
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
-        EmployeeDto response = employeeService.update(id, request, profile);
+        EmployeeDto response = employeeService.update(id, request, profile, httpRequest);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
+            HttpServletRequest httpRequest,
             @PathVariable UUID id
     ) {
-        employeeService.delete(id);
+        employeeService.delete(id, httpRequest);
         return ResponseEntity.noContent().build();
     }
 }

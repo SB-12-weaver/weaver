@@ -14,4 +14,6 @@ public interface EmployeeRepositoryCustom {
     List<EmployeeDistributionDto> distribution(EmployeeSearchDistribution searchDistribution);
 
     Long countEmployees(EmployeeCountCondition condition);
+
+    List<EmployeeBackupRow> findBackupRows(int offset, int limit);
 }

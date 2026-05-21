@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -77,6 +79,50 @@ public class FileServiceImpl implements FileService {
                 .build();
 
         return fileRepository.save(fileEntity);
+    }
+
+    @Override
+    public FileEntity saveFile(String originalName, String contentType, Path sourcePath, FilePurpose purpose) {
+        if (purpose == null) {
+            throw new IllegalArgumentException("파일 용도는 필수입니다.");
+        }
+
+        if (originalName == null || originalName.isBlank()) {
+            throw new IllegalArgumentException("파일명이 비어 있습니다.");
+        }
+
+        if (sourcePath == null || !Files.exists(sourcePath)) {
+            throw new IllegalArgumentException("저장할 파일이 존재하지 않습니다.");
+        }
+
+        try {
+            if (Files.size(sourcePath) == 0) {
+                throw new IllegalArgumentException("빈 파일은 저장할 수 없습니다.");
+            }
+
+            UUID id = UuidCreator.getTimeOrderedEpoch();
+
+            String storedFileName = id + "_" + originalName;
+            String storagePath = purpose.getDirectory() + "/" + storedFileName;
+
+            fileStorage.save(storagePath, sourcePath);
+
+            String resolvedContentType = resolveContentType(contentType, purpose);
+
+            FileEntity fileEntity = FileEntity.builder()
+                    .id(id)
+                    .originalName(originalName)
+                    .contentType(resolvedContentType)
+                    .size(Files.size(sourcePath))
+                    .storagePath(storagePath)
+                    .createdAt(Instant.now())
+                    .build();
+
+            return fileRepository.save(fileEntity);
+
+        } catch (IOException e) {
+            throw new RuntimeException("파일 크기 확인을 실패했습니다.", e);
+        }
     }
 
     @Override
