@@ -1,6 +1,8 @@
 package com.sbproject.weaver.employee.repository;
 
 import com.sbproject.weaver.employee.entity.Employee;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.Instant;
@@ -18,4 +20,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID>, Emplo
     boolean existsByEmployeeNumber(String employeeNumber);
 
     boolean existsByUpdatedAtAfter(Instant updatedAt);
+
+    Optional<Employee> findTopByEmployeeNumberStartingWithOrderByEmployeeNumberDesc(String prefix);
 }

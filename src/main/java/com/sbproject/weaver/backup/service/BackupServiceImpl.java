@@ -6,6 +6,7 @@ import com.sbproject.weaver.backup.entity.BackupStatus;
 import com.sbproject.weaver.backup.mapper.BackupMapper;
 import com.sbproject.weaver.backup.repository.BackupRepository;
 import com.sbproject.weaver.common.dto.CursorPageResponse;
+import com.sbproject.weaver.employee.dto.EmployeeBackupRow;
 import com.sbproject.weaver.employee.entity.Employee;
 import com.sbproject.weaver.employee.repository.EmployeeRepository;
 import com.sbproject.weaver.file.entity.FileEntity;
@@ -15,12 +16,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -31,6 +35,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BackupServiceImpl implements BackupService {
 
+    private static final int BACKUP_BATCH_SIZE = 20000;
+
     private final BackupRepository backupRepository;
     private final EmployeeRepository employeeRepository;
     private final FileService fileService;
@@ -39,6 +45,8 @@ public class BackupServiceImpl implements BackupService {
     @Override
     @Transactional
     public BackupDto runBackup(String worker) {
+        long totalStartTime = System.currentTimeMillis();
+
         BackupEntity backup = BackupEntity.builder()
                 .worker(worker)
                 .startedAt(Instant.now())
@@ -46,18 +54,31 @@ public class BackupServiceImpl implements BackupService {
 
         Instant lastSuccessTime = backupRepository.findFirstByStatusOrderByStartedAtDesc(BackupStatus.COMPLETED)
                 .map(BackupEntity::getEndedAt)
-                .orElse(Instant.MIN);
+                .orElse(null);
 
-        boolean needsBackup = employeeRepository.existsByUpdatedAtAfter(lastSuccessTime);
+        boolean needsBackup = lastSuccessTime == null
+                || employeeRepository.existsByUpdatedAtAfter(lastSuccessTime);
 
         if (!needsBackup) {
             backup.skip(Instant.now());
-            backupRepository.save(backup);
-            return backupMapper.toBackupDto(backup);
+            BackupEntity savedBackup = backupRepository.save(backup);
+
+            log.info("[Backup Performance] result=SKIPPED, elapsed={}ms",
+                    System.currentTimeMillis() - totalStartTime
+            );
+
+            return backupMapper.toBackupDto(savedBackup);
         }
 
+        Path tempCsvPath = null;
+
         try {
-            byte[] csvFile = createCsvFile();
+            long csvStartTime = System.currentTimeMillis();
+
+            CsvFileResult csvFileResult = createCsvFile();
+            tempCsvPath = csvFileResult.path();
+
+            long csvElapsed = System.currentTimeMillis() - csvStartTime;
 
             String fileName = String.format(
                     "employee_backup_%s_%s.csv",
@@ -65,14 +86,29 @@ public class BackupServiceImpl implements BackupService {
                     LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
             );
 
-            FileEntity savedFile = fileService.saveBytes(
+            FileEntity savedFile = fileService.saveFile(
                     fileName,
                     "text/csv",
-                    csvFile,
+                    tempCsvPath,
                     FilePurpose.BACKUP_CSV
             );
 
             backup.complete(Instant.now(), savedFile);
+
+            BackupEntity savedBackup = backupRepository.save(backup);
+
+            long totalElapsed = System.currentTimeMillis() - totalStartTime;
+
+            log.info(
+                    "[Backup Performance] result=COMPLETED, employees={}, batchSize={}, csvSize={}MB, csvElapsed={}ms, totalElapsed={}ms",
+                    csvFileResult.employeeCount(),
+                    BACKUP_BATCH_SIZE,
+                    csvFileResult.sizeBytes() / 1024 / 1024,
+                    csvElapsed,
+                    totalElapsed
+            );
+
+            return backupMapper.toBackupDto(savedBackup);
 
         } catch (Exception e) {
             log.error("백업 작업 중 오류 발생", e);
@@ -93,10 +129,18 @@ public class BackupServiceImpl implements BackupService {
             );
 
             backup.fail(Instant.now(), errorFile);
-        }
 
-        BackupEntity savedBackup = backupRepository.save(backup);
-        return backupMapper.toBackupDto(savedBackup);
+            BackupEntity savedBackup = backupRepository.save(backup);
+
+            log.info("[Backup Performance] result=FAILED, elapsed={}ms",
+                    System.currentTimeMillis() - totalStartTime
+            );
+
+            return backupMapper.toBackupDto(savedBackup);
+
+        } finally {
+            deleteTempFile(tempCsvPath);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -169,11 +213,20 @@ public class BackupServiceImpl implements BackupService {
                 .build();
     }
 
-    private byte[] createCsvFile() {
-        List<Employee> employees = employeeRepository.findAll();
+    private CsvFileResult createCsvFile() {
+        Path tempCsvPath;
+
+        try {
+            tempCsvPath = Files.createTempFile("employee_backup_", ".csv");
+        } catch (IOException e) {
+            throw new RuntimeException("임시 CSV 파일 생성 실패", e);
+        }
+
+        long processedCount = 0;
+        int offset = 0;
 
         try (
-                StringWriter writer = new StringWriter();
+                BufferedWriter writer = Files.newBufferedWriter(tempCsvPath, StandardCharsets.UTF_8);
                 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.builder()
                         .setHeader(
                                 "id",
@@ -187,24 +240,60 @@ public class BackupServiceImpl implements BackupService {
                         )
                         .build())
         ) {
-            for (Employee employee : employees) {
-                csvPrinter.printRecord(
-                        employee.getId(),
-                        employee.getEmployeeNumber(),
-                        employee.getName(),
-                        employee.getEmail(),
-                        employee.getDepartment().getId(),
-                        employee.getPosition(),
-                        employee.getHireDate(),
-                        employee.getStatus()
-                );
+            Slice<Employee> page;
+
+            while (true) {
+                List<EmployeeBackupRow> rows = employeeRepository.findBackupRows(offset, BACKUP_BATCH_SIZE);
+
+                if (rows.isEmpty()) {
+                    break;
+                }
+
+                for (EmployeeBackupRow row : rows) {
+                    csvPrinter.printRecord(
+                            row.getId(),
+                            row.getEmployeeNumber(),
+                            row.getName(),
+                            row.getEmail(),
+                            row.getDepartmentId(),
+                            row.getPosition(),
+                            row.getHireDate(),
+                            row.getStatus()
+                    );
+                }
+
+                processedCount += rows.size();
+
+                if (processedCount % 50000 == 0) {
+                    log.info("[Backup CSV] processed employees={}", processedCount);
+                }
+
+                if (rows.size() < BACKUP_BATCH_SIZE) {
+                    break;
+                }
+
+                offset += BACKUP_BATCH_SIZE;
             }
 
-            csvPrinter.flush();
-            return writer.toString().getBytes(StandardCharsets.UTF_8);
+            long sizeBytes = Files.size(tempCsvPath);
+
+            return new CsvFileResult(tempCsvPath, processedCount, sizeBytes);
 
         } catch (IOException e) {
+            deleteTempFile(tempCsvPath);
             throw new RuntimeException("CSV 파일 생성 실패", e);
+        }
+    }
+
+    private void deleteTempFile(Path tempCsvPath) {
+        if (tempCsvPath == null) {
+            return;
+        }
+
+        try {
+            Files.deleteIfExists(tempCsvPath);
+        } catch (IOException e) {
+            log.warn("임시 CSV 파일 삭제 실패: {}", tempCsvPath, e);
         }
     }
 
@@ -214,5 +303,12 @@ public class BackupServiceImpl implements BackupService {
         }
 
         return Instant.parse(value);
+    }
+
+    private record CsvFileResult(
+            Path path,
+            long employeeCount,
+            long sizeBytes
+    ) {
     }
 }
