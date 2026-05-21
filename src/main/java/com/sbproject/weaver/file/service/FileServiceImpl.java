@@ -68,18 +68,23 @@ public class FileServiceImpl implements FileService {
 
         fileStorage.saveByte(storagePath, bytes);
 
-        String resolvedContentType = resolveContentType(contentType, purpose);
+        try {
+            String resolvedContentType = resolveContentType(contentType, purpose);
 
-        FileEntity fileEntity = FileEntity.builder()
-                .id(id)
-                .originalName(originalName)
-                .contentType(resolvedContentType)
-                .size((long) bytes.length)
-                .storagePath(storagePath)
-                .createdAt(Instant.now())
-                .build();
+            FileEntity fileEntity = FileEntity.builder()
+                    .id(id)
+                    .originalName(originalName)
+                    .contentType(resolvedContentType)
+                    .size((long) bytes.length)
+                    .storagePath(storagePath)
+                    .createdAt(Instant.now())
+                    .build();
 
-        return fileRepository.save(fileEntity);
+            return fileRepository.save(fileEntity);
+        } catch (RuntimeException e) {
+            fileStorage.delete(storagePath);
+            throw e;
+        }
     }
 
     @Override
@@ -97,7 +102,9 @@ public class FileServiceImpl implements FileService {
         }
 
         try {
-            if (Files.size(sourcePath) == 0) {
+            long size = Files.size(sourcePath);
+
+            if (size == 0) {
                 throw new IllegalArgumentException("빈 파일은 저장할 수 없습니다.");
             }
 
@@ -108,18 +115,23 @@ public class FileServiceImpl implements FileService {
 
             fileStorage.saveFile(storagePath, sourcePath);
 
-            String resolvedContentType = resolveContentType(contentType, purpose);
+            try {
+                String resolvedContentType = resolveContentType(contentType, purpose);
 
-            FileEntity fileEntity = FileEntity.builder()
-                    .id(id)
-                    .originalName(originalName)
-                    .contentType(resolvedContentType)
-                    .size(Files.size(sourcePath))
-                    .storagePath(storagePath)
-                    .createdAt(Instant.now())
-                    .build();
+                FileEntity fileEntity = FileEntity.builder()
+                        .id(id)
+                        .originalName(originalName)
+                        .contentType(resolvedContentType)
+                        .size(size)
+                        .storagePath(storagePath)
+                        .createdAt(Instant.now())
+                        .build();
 
-            return fileRepository.save(fileEntity);
+                return fileRepository.save(fileEntity);
+            } catch (RuntimeException e) {
+                fileStorage.delete(storagePath);
+                throw e;
+            }
 
         } catch (IOException e) {
             throw new RuntimeException("파일 크기 확인을 실패했습니다.", e);
@@ -144,8 +156,8 @@ public class FileServiceImpl implements FileService {
     public void delete(UUID fileId) {
         FileEntity fileEntity = getFileOrThrow(fileId);
 
-        fileStorage.delete(fileEntity.getStoragePath());
         fileRepository.delete(fileEntity);
+        fileStorage.delete(fileEntity.getStoragePath());
     }
 
     private FileEntity getFileOrThrow(UUID fileId) {
