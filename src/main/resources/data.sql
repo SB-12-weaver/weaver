@@ -30,16 +30,16 @@
 -- RESTART IDENTITY CASCADE;
 
 --H2 DB
-SET REFERENTIAL_INTEGRITY FALSE;
-
-TRUNCATE TABLE employee_change_diffs;
-TRUNCATE TABLE employee_change_logs;
-TRUNCATE TABLE backup_histories;
-TRUNCATE TABLE employees;
-TRUNCATE TABLE files;
-TRUNCATE TABLE departments;
-
-SET REFERENTIAL_INTEGRITY TRUE;
+-- SET REFERENTIAL_INTEGRITY FALSE;
+--
+-- TRUNCATE TABLE employee_change_diffs;
+-- TRUNCATE TABLE employee_change_logs;
+-- TRUNCATE TABLE backup_histories;
+-- TRUNCATE TABLE employees;
+-- TRUNCATE TABLE files;
+-- TRUNCATE TABLE departments;
+--
+-- SET REFERENTIAL_INTEGRITY TRUE;
 -- =========================================================
 -- 1. departments
 -- 테스트 포인트:
