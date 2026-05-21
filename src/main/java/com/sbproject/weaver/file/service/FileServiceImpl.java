@@ -8,6 +8,7 @@ import com.sbproject.weaver.file.repository.FileRepository;
 import com.sbproject.weaver.file.storage.FileStorage;
 import com.sbproject.weaver.file.type.FilePurpose;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -65,20 +66,25 @@ public class FileServiceImpl implements FileService {
         String storedFileName = id + "_" + originalName;
         String storagePath = purpose.getDirectory() + "/" + storedFileName;
 
-        fileStorage.save(storagePath, bytes);
+        fileStorage.saveByte(storagePath, bytes);
 
-        String resolvedContentType = resolveContentType(contentType, purpose);
+        try {
+            String resolvedContentType = resolveContentType(contentType, purpose);
 
-        FileEntity fileEntity = FileEntity.builder()
-                .id(id)
-                .originalName(originalName)
-                .contentType(resolvedContentType)
-                .size((long) bytes.length)
-                .storagePath(storagePath)
-                .createdAt(Instant.now())
-                .build();
+            FileEntity fileEntity = FileEntity.builder()
+                    .id(id)
+                    .originalName(originalName)
+                    .contentType(resolvedContentType)
+                    .size((long) bytes.length)
+                    .storagePath(storagePath)
+                    .createdAt(Instant.now())
+                    .build();
 
-        return fileRepository.save(fileEntity);
+            return fileRepository.save(fileEntity);
+        } catch (RuntimeException e) {
+            fileStorage.delete(storagePath);
+            throw e;
+        }
     }
 
     @Override
@@ -96,7 +102,9 @@ public class FileServiceImpl implements FileService {
         }
 
         try {
-            if (Files.size(sourcePath) == 0) {
+            long size = Files.size(sourcePath);
+
+            if (size == 0) {
                 throw new IllegalArgumentException("빈 파일은 저장할 수 없습니다.");
             }
 
@@ -105,20 +113,25 @@ public class FileServiceImpl implements FileService {
             String storedFileName = id + "_" + originalName;
             String storagePath = purpose.getDirectory() + "/" + storedFileName;
 
-            fileStorage.save(storagePath, sourcePath);
+            fileStorage.saveFile(storagePath, sourcePath);
 
-            String resolvedContentType = resolveContentType(contentType, purpose);
+            try {
+                String resolvedContentType = resolveContentType(contentType, purpose);
 
-            FileEntity fileEntity = FileEntity.builder()
-                    .id(id)
-                    .originalName(originalName)
-                    .contentType(resolvedContentType)
-                    .size(Files.size(sourcePath))
-                    .storagePath(storagePath)
-                    .createdAt(Instant.now())
-                    .build();
+                FileEntity fileEntity = FileEntity.builder()
+                        .id(id)
+                        .originalName(originalName)
+                        .contentType(resolvedContentType)
+                        .size(size)
+                        .storagePath(storagePath)
+                        .createdAt(Instant.now())
+                        .build();
 
-            return fileRepository.save(fileEntity);
+                return fileRepository.save(fileEntity);
+            } catch (RuntimeException e) {
+                fileStorage.delete(storagePath);
+                throw e;
+            }
 
         } catch (IOException e) {
             throw new RuntimeException("파일 크기 확인을 실패했습니다.", e);
@@ -134,17 +147,17 @@ public class FileServiceImpl implements FileService {
 
     @Override
     @Transactional(readOnly = true)
-    public byte[] download(UUID fileId) {
+    public Resource downloadResource(UUID fileId) {
         FileEntity fileEntity = getFileOrThrow(fileId);
-        return fileStorage.read(fileEntity.getStoragePath());
+        return fileStorage.loadAsResource(fileEntity.getStoragePath());
     }
 
     @Override
     public void delete(UUID fileId) {
         FileEntity fileEntity = getFileOrThrow(fileId);
 
-        fileStorage.delete(fileEntity.getStoragePath());
         fileRepository.delete(fileEntity);
+        fileStorage.delete(fileEntity.getStoragePath());
     }
 
     private FileEntity getFileOrThrow(UUID fileId) {

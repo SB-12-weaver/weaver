@@ -27,6 +27,7 @@ public abstract class BaseEntity {
     @Column(updatable = false, nullable = false)
     private UUID id;
 
+
     @CreatedDate
     @Column(columnDefinition = "timestamp with time zone default now()",
             updatable = false, nullable = false)
