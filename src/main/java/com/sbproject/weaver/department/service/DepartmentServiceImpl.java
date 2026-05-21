@@ -68,7 +68,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     // name 중복 체크
     if(departmentRepository.existsByName(request.getName())
-    && !entity.getName().equals(request.getName())) {
+            && !entity.getName().equals(request.getName())) {
       throw new IllegalArgumentException("Department name already exists");
     }
 

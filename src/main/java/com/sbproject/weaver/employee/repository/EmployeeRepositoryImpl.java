@@ -416,4 +416,29 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
                 .groupBy(groupPath)
                 .fetch();
     }
+
+    @Override
+    public List<EmployeeBackupRow> findBackupRows(int offset, int limit) {
+        QEmployee employee = QEmployee.employee;
+        QDepartment department = QDepartment.department;
+
+        return queryFactory
+                .select(Projections.constructor(
+                        EmployeeBackupRow.class,
+                        employee.id,
+                        employee.employeeNumber,
+                        employee.name,
+                        employee.email,
+                        department.id,
+                        employee.position,
+                        employee.hireDate,
+                        employee.status
+                ))
+                .from(employee)
+                .join(employee.department, department)
+                .orderBy(employee.employeeNumber.asc())
+                .offset(offset)
+                .limit(limit)
+                .fetch();
+    }
 }

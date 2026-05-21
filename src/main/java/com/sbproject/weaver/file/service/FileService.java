@@ -5,6 +5,7 @@ import com.sbproject.weaver.file.entity.FileEntity;
 import com.sbproject.weaver.file.type.FilePurpose;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Path;
 import java.util.UUID;
 
 public interface FileService {
@@ -18,4 +19,6 @@ public interface FileService {
     byte[] download(UUID fileId);
 
     void delete(UUID fileId);
+
+    FileEntity saveFile(String originalName, String contentType, Path sourcePath, FilePurpose purpose);
 }
