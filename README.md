@@ -7,16 +7,16 @@
 
 <br>
 
-## 👨‍👩‍👧‍👦 팀원 구성
+## 👨‍👩‍👧‍👦 팀원 구성 및 구현 기능
 
-| 이름 | GitHub |
-|---|---|
-| 이예진 | [@aHjinee](https://github.com/aHjinee) |
-| 김태성 | [@ts8191](https://github.com/ts8191) |
-| 윤영주 | [@YOONYOUNGJOO](https://github.com/YOONYOUNGJOO) |
-| 양정우 | [@ozingeodari](https://github.com/ozingeodari) |
-| 김성규 | [@ksg-97](https://github.com/ksg-97) |
-| 김한영 | [@gksdud-dlfkrh-gkqslek](https://github.com/gksdud-dlfkrh-gkqslek) |
+| 이름 | GitHub | 구현 기능 |
+|---|---|---|
+| **이예진** | [@aHjinee](https://github.com/aHjinee) | 직원 이력 관리 |
+| **김태성** | [@ts8191](https://github.com/ts8191) | 부서 관리 |
+| **윤영주** | [@YOONYOUNGJOO](https://github.com/YOONYOUNGJOO) | 파일 관리, 대시보드 관리 |
+| **양정우** | [@ozingeodari](https://github.com/ozingeodari) | 백업 관리, 배포 |
+| **김성규** | [@ksg-97](https://github.com/ksg-97) | 직원 관리 |
+| **김한영** | [@gksdud-dlfkrh-gkqslek](https://github.com/gksdud-dlfkrh-gkqslek) | 부서 관리 |
 
 <br>
 
@@ -71,19 +71,13 @@
 # ✨ 주요 기능
 
 ## 👥 직원 관리
- ### 직원 등록 및 수정 <br>
-  <img height="400" style="width: auto; margin-right: 20px;" src="https://github.com/user-attachments/assets/831fd79b-1891-4051-b05d-9632644b0809" /> <br><br>
-  임시 이미지 설명 이미지 설명입니다 이미지 설명이 들어갑니다<br><br>
-  <img height="400" style="width: auto;" src="https://github.com/user-attachments/assets/6602d322-3f04-4d1d-815d-bf42ffe0e484" /> <br><br>
-  임시 이미지 설명 이미지 설명입니다 이미지 설명이 들어갑니다<br>
+- 직원 등록 및 수정
 - 직원 목록 및 상세 조회
 - 직원 삭제 처리
 - 직원 정보 관리
 
-<!-- 이미지 추가 예정 -->
-<!-- <img src="" width="800"/> -->
 
-<br>
+
 
 ---
 
@@ -93,9 +87,9 @@
 - 부서 상세 조회
 - 부서별 데이터 관리
 
-<!-- 이미지 추가 예정 -->
 
-<br>
+
+
 
 ---
 
@@ -105,9 +99,8 @@
 - 직무별 현황 분석
 - 데이터 흐름 시각화
 
-<!-- 이미지 추가 예정 -->
 
-<br>
+
 
 ---
 
@@ -117,9 +110,7 @@
 - 상세 변경 내역 확인
 - 이력 데이터 관리
 
-<!-- 이미지 추가 예정 -->
 
-<br>
 
 ---
 
@@ -129,9 +120,8 @@
 - 파일 저장 처리
 - 파일 목록 조회
 
-<!-- 이미지 추가 예정 -->
 
-<br>
+
 
 ---
 
@@ -141,26 +131,14 @@
 - 자동 백업 스케줄링
 - 백업 파일 저장
 
-<!-- 이미지 추가 예정 -->
-
-<br>
-
----
-
-# 👨‍💻 팀원별 구현 기능 상세
-
-| 담당자 | 구현 기능 |
-|---|---|
-| 김태성 / 김한영 | 부서 CRUD, 부서 조회, 대시보드 통계 기능 |
-| 김성규 / 이예진 | 직원 CRUD, 직원 조회, 변경 이력 관리 |
-| 양정우 / 윤영주 | 파일 관리, 데이터 백업, 자동 백업 스케줄러 |
-
-<br>
 
 ---
 
 # 📂 프로젝트 구조
 
+<Details>
+ <summary>접기/펼치기</summary>
+ 
 ```bash
 src
 ┣ main
@@ -213,17 +191,19 @@ src
 ┃ ┗ resources
 ┃   ┗ static/assets
 ```
+</Details>
 <br>
+
 
 
 # 🌐 구현 홈페이지
 
-홈체이지 링크 자리
+[서비스 링크](https://weaver-production-4d70.up.railway.app/#/dashboard)
 <br><br><br>
 
 ---
 
 # 📝 프로젝트 회고록
 
-회고록 링크 자리
+파일 예정
 <br><br><br>
