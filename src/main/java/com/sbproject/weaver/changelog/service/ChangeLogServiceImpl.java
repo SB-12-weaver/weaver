@@ -12,6 +12,7 @@ import com.sbproject.weaver.changelog.repository.ChangeLogRepositoryCustom;
 import com.sbproject.weaver.common.dto.CursorPageResponse;
 import com.sbproject.weaver.common.util.ipUtil;
 import com.sbproject.weaver.employee.entity.Employee;
+import com.sbproject.weaver.employee.repository.EmployeeRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,8 @@ public class ChangeLogServiceImpl implements ChangeLogService {
     private final ChangeLogRepository changeLogRepository;
     private final ChangeDiffRepository changeDiffRepository;
     private final ChangeLogMapper changeLogMapper;
+
+    private final EmployeeRepository employeeRepository;
 
     @Transactional
     @Override
@@ -68,6 +71,17 @@ public class ChangeLogServiceImpl implements ChangeLogService {
         EmployeeChangeLog entity = changeLogRepository.findById((id))
                 .orElseThrow(() -> new NoSuchElementException("post not found: " + id));
 
+        String empNum = entity.getEmployeeNumber();
+        String empName = null;
+        if(empNum != null){
+            Employee employee = employeeRepository.findByEmployeeNumber(empNum)
+                    .orElse(null);
+
+            if (employee != null) {
+                empName = employee.getName();
+            }
+        }
+
         List<EmployeeChangeDiff> diffs = changeDiffRepository.findByChangeLogId(id);
         List<DiffDto> diffDtos = new ArrayList<>(diffs.stream().map(changeLogMapper::toDiffDto).toList());
 
@@ -80,6 +94,7 @@ public class ChangeLogServiceImpl implements ChangeLogService {
 
         return ChangeLogDetailDto.builder()
                 .id(entity.getId())
+                .employeeName(empName)
                 .type(entity.getType())
                 .employeeNumber(entity.getEmployeeNumber())
                 .memo(entity.getMemo())

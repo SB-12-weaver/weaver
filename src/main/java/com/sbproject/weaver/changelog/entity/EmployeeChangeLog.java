@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -51,7 +53,7 @@ public class EmployeeChangeLog {
         }
 
         if (at == null) {
-            at = Instant.now().plusSeconds(60 * 60 * 9);
+            at = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toInstant();
         }
     }
 }
