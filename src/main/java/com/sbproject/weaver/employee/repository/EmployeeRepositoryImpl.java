@@ -294,7 +294,8 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
 
             double changeRate = first || previousCount == 0
                     ? 0.0
-                    : ((double) change / previousCount) * 100;
+                    : Math.round(((double) change / previousCount) * 100 * 100) / 100.0;
+//                    : ((double) change / previousCount) * 100;
 
             result.add(new EmployeeTrendDto(
                     formatPeriod(current, unit),
